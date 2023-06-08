@@ -13,7 +13,7 @@ rule digest_proteins:
         temp('results/peptide_list_{enz}.tsv')
     shell:
         "mkdir -p results; "
-        "python3 src/analysis/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output}"
+        "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output}"
 
 rule merge_peptide_lists:
     input:
@@ -44,17 +44,17 @@ rule annotate_variation:
     threads: config['max_cores']
     run:
         if ((len(config["var_db_table"]) > 0) and (len(config["haplo_db_table"]) > 0)):
-            shell("python3 src/results_postprocess_newDB/psm_annotate_variation_newDB.py -i {input.peptides} \
+            shell("python3 src/peptides_annotate_variation.py -i {input.peptides} \
                         -var_tsv {input.var_db} -hap_tsv {input.haplo_db} \
                         -var_prefix {params.variant_prefix} -hap_prefix {params.haplotype_prefix} \
                         -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; ")
     
         elif (len(config["var_db_table"]) > 0):
-            shell("python3 src/results_postprocess_newDB/psm_annotate_variation_newDB.py -i {input.peptides} \
+            shell("python3 src/peptides_annotate_variation.py -i {input.peptides} \
                         -var_tsv {input.var_db} -var_prefix {params.variant_prefix} \
                         -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; ")
 
         elif (len(config["haplo_db_table"]) > 0):
-            shell("python3 src/results_postprocess_newDB/psm_annotate_variation_newDB.py -i {input.peptides} \
+            shell("python3 src/peptides_annotate_variation.py -i {input.peptides} \
                         -hap_tsv {input.haplo_db} -hap_prefix {params.haplotype_prefix} \
                         -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; ")
