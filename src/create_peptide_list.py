@@ -15,7 +15,7 @@ parser.add_argument("-m", dest="missed_cl", type=int, required=False, default=2,
 parser.add_argument("-enz", dest="enzyme", required=False, default="Trypsin",
                     help="Name of the simulated proteases cleavage pattern (default: \"Trypsin\"")
 
-parser.add_argument("-enz_json", dest="enzyme_json", required=False, default="enzymeFactory-5.0.0.json",
+parser.add_argument("-enz_json", dest="enzyme_json", required=False, default="data/enzymeFactory-5.0.0.json",
                     help="JSON file with enzyme information", metavar="FILE")
 
 parser.add_argument("-min_len", dest="min_len", type=int, required=False, default=6,
