@@ -5,7 +5,17 @@ ENZYMES = ["Trypsin", "Lys-C", "Lys-N", "Glu-C", "Asp-N", "Chymotrypsin"]
 rule all:
     input:
         pept=config['final_peptide_list'],
-        vars=config['discoverable_variant_list']
+        discoverable_vars=config['discoverable_variant_list'],
+        haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else [])
+
+rule annotate_variant_conseq:
+    input:
+        config['haplo_db_table']
+    output:
+        h=config['annot_haplo_db']
+        v=config['possible_variant_list']
+    shell:
+        "python3 src/haplo_annotate_var_types.py -i {input} -oh {output.h} -ov {output.v} "
 
 rule digest_proteins:
     input:
@@ -26,7 +36,7 @@ rule merge_peptide_lists:
     shell:
         "python3 src/merge_tables.py -i {params.input_file_list} -o {output}"
 
-rule annotate_variation:
+rule peptides_annotate_variation:
     input:
         peptides="results/peptide_list_full.tsv",
         var_db=expand('{proxy}', proxy=[config['var_db_table']] if len(config["var_db_table"]) > 0 else []),
