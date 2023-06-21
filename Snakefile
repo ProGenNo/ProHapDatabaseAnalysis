@@ -4,7 +4,8 @@ ENZYMES = ["Trypsin", "Lys-C", "Lys-N", "Glu-C", "Asp-N", "Chymotrypsin"]
 
 rule all:
     input:
-        pept=config['final_peptide_list']
+        pept=config['final_peptide_list'],
+        vars=config['discoverable_variant_list']
 
 rule digest_proteins:
     input:
@@ -19,7 +20,7 @@ rule merge_peptide_lists:
     input:
         expand('results/peptide_list_{enz}.tsv', enz=ENZYMES)
     output:
-        temp("results/peptide_list_full.tsv")
+        "results/peptide_list_full.tsv"
     params:
         input_file_list = ','.join(expand('results/peptide_list_{enz}.tsv', enz=ENZYMES))
     shell:
@@ -58,3 +59,12 @@ rule annotate_variation:
             shell("python3 src/peptides_annotate_variation.py -i {input.peptides} \
                         -hap_tsv {input.haplo_db} -hap_prefix {params.haplotype_prefix} \
                         -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; ")
+
+rule get_discoverable_variants:
+	input:
+		pep=config['final_peptide_list'],
+		hap=config['haplo_db_table']
+	output:
+		config['discoverable_variant_list']
+	shell:
+		"python src/get_discoverable_variants.py -i {input.pep} -hap_tsv {input.hap} -o {output}; "

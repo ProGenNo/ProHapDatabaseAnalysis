@@ -177,7 +177,7 @@ def check_ref_alleles(transcriptID, position, sequence, log_mismatch = False):
                 result.append(alleles['DNA'][allele_idx])
             else:
                 if (log_mismatch):
-                    log_file.write(transcriptID + ': reference allele mismatched. Expected: ' + alleles['allele'][allele_idx] + ' found: ' + sequence[:pep_position] + ' ' + sequence[pep_position:])
+                    log_file.write(transcriptID + ': reference allele mismatched. Expected: ' + alleles['allele'][allele_idx] + ' found: ' + sequence[:pep_position] + ' ' + sequence[pep_position:] + '\n')
 
     return result
 
