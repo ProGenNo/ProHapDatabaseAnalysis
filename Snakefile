@@ -8,14 +8,13 @@ rule all:
         discoverable_vars=config['discoverable_variant_list'],
         haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else [])
 
-rule annotate_variant_conseq:
+rule list_all_possible_variants:
     input:
         config['haplo_db_table']
     output:
-        h=config['annot_haplo_db']
         v=config['possible_variant_list']
     shell:
-        "python3 src/haplo_annotate_var_types.py -i {input} -oh {output.h} -ov {output.v} "
+        "python3 src/haplo_extract_all_vars.py -i {input} -o {output.v} "
 
 rule digest_proteins:
     input:
