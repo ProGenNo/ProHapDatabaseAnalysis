@@ -323,9 +323,9 @@ def process_row(index):
             ref_prot_allele = protein_change.split(':', 1)[1].split('>', 1)[0].replace('I', 'L').replace('-', '')
             alt_prot_allele = protein_change.split(':', 2)[2].split('(', 1)[0].replace('I', 'L').replace('-', '')  # frameshifts are labelled with '(+fs)' at the end
 
-            if (ref_prot_allele != alt_prot_allele) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
+            if ((ref_prot_allele != alt_prot_allele) or protein_change.endswith('(+fs)')) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
                 # check if a frameshift happens in this peptide
-                has_frameshift = has_frameshift or ch.endswith('(+fs)')
+                has_frameshift = has_frameshift or protein_change.endswith('(+fs)')
 
                 # locate the alternative allele sequence in the peptide
                 change_pep_loc = [ change_loc - pep_loc[0], change_loc - pep_loc[0] + len(alt_prot_allele) ]
@@ -336,7 +336,7 @@ def process_row(index):
 
                 # Sanity check: have we found the alternative allele in the peptide?
                 if found_allele != alt_prot_allele:
-                    log_file.write('peptide ' + row['ID'] + ' variant: ' + protID + ' expected: ' + alt_prot_allele + ' found: ' + row['Sequence'][:change_pep_loc[0]] + ' ' + row['Sequence'][change_pep_loc[0]:change_pep_loc[1]])
+                    log_file.write('peptide ' + row['ID'] + ' variant: ' + protID + ' expected: ' + alt_prot_allele + ' found: ' + row['Sequence'][:change_pep_loc[0]] + ' ' + row['Sequence'][change_pep_loc[0]:change_pep_loc[1]] + '\n')
                 else:
                     # All looks ok -> store this change as identified
                     matching_protein_changes.append(parent_transcript + ':' + protein_change)

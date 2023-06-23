@@ -161,6 +161,9 @@ cython_debug/
 
 # Project-specific
 config.yaml
-.snakemake/*
-results/*
+.snakemake
+.vscode
+results
+test
+tmp
 #data/*
