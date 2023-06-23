@@ -14,7 +14,7 @@ rule list_all_possible_variants:
     output:
         v=config['possible_variant_list']
     shell:
-        "python3 src/haplo_extract_all_vars.py -i {input} -o {output.v} "
+        "python3 src/haplo_extract_all_vars.py -hap_tsv {input} -o {output.v} "
 
 rule digest_proteins:
     input:
