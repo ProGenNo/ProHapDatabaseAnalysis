@@ -13,6 +13,7 @@ rule list_all_possible_variants:
         config['haplo_db_table']
     output:
         v=config['possible_variant_list']
+    conda: "envs/main_env.yaml"
     shell:
         "python3 src/haplo_extract_all_vars.py -hap_tsv {input} -o {output.v} "
 
@@ -21,6 +22,7 @@ rule digest_proteins:
         config['full_fasta_file']
     output:
         temp('results/peptide_list_{enz}.tsv')
+    conda: "envs/main_env.yaml"
     shell:
         "mkdir -p results; "
         "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output}"
@@ -30,6 +32,7 @@ rule merge_peptide_lists:
         expand('results/peptide_list_{enz}.tsv', enz=ENZYMES)
     output:
         "results/peptide_list_full.tsv"
+    conda: "envs/main_env.yaml"
     params:
         input_file_list = ','.join(expand('results/peptide_list_{enz}.tsv', enz=ENZYMES))
     shell:
@@ -52,6 +55,7 @@ rule peptides_annotate_variation:
         max_cores=config['max_cores'],
         log_file="results/variation_annot_errors.log"
     threads: config['max_cores']
+    conda: "envs/main_env.yaml"
     run:
         if ((len(config["var_db_table"]) > 0) and (len(config["haplo_db_table"]) > 0)):
             shell("python3 src/peptides_annotate_variation.py -i {input.peptides} \
@@ -75,5 +79,6 @@ rule get_discoverable_variants:
 		hap=config['haplo_db_table']
 	output:
 		config['discoverable_variant_list']
+    conda: "envs/main_env.yaml"
 	shell:
 		"python src/get_discoverable_variants.py -i {input.pep} -hap_tsv {input.hap} -o {output}; "
