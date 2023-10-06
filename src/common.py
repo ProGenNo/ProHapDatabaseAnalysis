@@ -168,14 +168,14 @@ def digest(seq, missed_c, min_length, max_length, cleavage_pattern):
                 queue = queue[-(missed_c+1):]
                 position_queue = position_queue[-(missed_c+1):]
 
-            if (len(buffer) > min_length and len(buffer) < max_length):
+            if (len(buffer) >= min_length and len(buffer) <= max_length):
                 peptides.append(buffer)
                 positions.append(prev_cleavage)
 
             for no_missed in range(1, missed_c+1):
                 if (len(queue) > no_missed):
                     pep_missed = ''.join(queue[-(no_missed+1):])
-                    if (len(pep_missed) > min_length and len(pep_missed) < max_length):
+                    if (len(pep_missed) >= min_length and len(pep_missed) <= max_length):
                         peptides.append(pep_missed)
                         positions.append(position_queue[-(no_missed+1)])
 
@@ -192,14 +192,14 @@ def digest(seq, missed_c, min_length, max_length, cleavage_pattern):
         queue = queue[-(missed_c+1):]
         position_queue = position_queue[-(missed_c+1):]
 
-    if (len(buffer) > min_length and len(buffer) < max_length):
+    if (len(buffer) >= min_length and len(buffer) <= max_length):
         peptides.append(buffer)
         positions.append(prev_cleavage)
 
     for no_missed in range(1, missed_c+1):
         if (len(queue) > no_missed):
             pep_missed = ''.join(queue[-(no_missed+1):])
-            if (len(pep_missed) > min_length and len(pep_missed) < max_length):
+            if (len(pep_missed) >= min_length and len(pep_missed) <= max_length):
                 peptides.append(pep_missed)
                 positions.append(position_queue[-(no_missed+1)])
 

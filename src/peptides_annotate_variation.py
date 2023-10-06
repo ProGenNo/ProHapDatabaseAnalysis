@@ -129,8 +129,8 @@ for trID in transcript_allele_locations:
         positions, alleles, uniq_alleles_DNA = zip(*zipped)
     except:
         transcript_allele_locations[trID] = { 'pos': [], 'allele': [], 'DNA': [] }
-    finally:
-        transcript_allele_locations[trID] = { 'pos': positions, 'allele': alleles, 'DNA': uniq_alleles_DNA }
+        continue
+    transcript_allele_locations[trID] = { 'pos': positions, 'allele': alleles, 'DNA': uniq_alleles_DNA }
 
 print ("Reading", args.transcript_ids)
 tr_id_df = pd.read_csv(args.transcript_ids, header=0)
@@ -150,7 +150,7 @@ log_file = open(args.log_file, 'a')
 log_file.write('------------' + '[' + datetime.now().strftime('%X %x') + '] file: ' + args.input_file + ':' + '------------\n')
 
 summary_data = []
-summary_columns = ['ID', 'sequence', 'enzyme', 'pep_type1', 'pep_type2', 'covered_changes_protein', 'covered_alleles_dna', 'matching_proteins', 'matching_transcripts', 'matching_genes', 'positions_in_proteins', 'reading_frames']
+summary_columns = ['ID', 'sequence', 'enzyme', 'pep_type1', 'pep_type2', 'covered_changes_peptide', 'covered_changes_protein', 'covered_alleles_dna', 'matching_proteins', 'matching_transcripts', 'matching_genes', 'positions_in_proteins', 'reading_frames']
 
 print ("Annotating peptides:")
 
@@ -177,7 +177,7 @@ def check_ref_alleles(transcriptID, position, sequence, log_mismatch = False):
                 result.append(alleles['DNA'][allele_idx])
             else:
                 if (log_mismatch):
-                    log_file.write(transcriptID + ': reference allele mismatched. Expected: ' + alleles['allele'][allele_idx] + ' found: ' + sequence[:pep_position] + ' ' + sequence[pep_position:] + '\n')
+                    log_file.write(transcriptID + ': reference allele mismatched. Expected: ' + alleles['allele'][allele_idx] + ' found: ' + sequence[:pep_position] + ' ' + sequence[pep_position:])
 
     return result
 
@@ -212,7 +212,7 @@ def process_row(index):
     # crap match = any matching sequence is a contaminant
     is_contaminant = any([ 'cont' in fasta_entries[fastaID]['tag'] for fastaID in fasta_accessions ])
     if is_contaminant:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'contaminant', 'contaminant', '', '', '', '', '', '', '']
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'contaminant', 'contaminant', '', '', '', '', '', '', '', '']
 
     # concentrate all matching proteins (haplotype or stable protein ids)
     matching_proteins = []
@@ -228,7 +228,7 @@ def process_row(index):
         matching_seq_positions = fasta_entry['seq_positions']       # Positions of protein sub-sequences in the complete protein (after splitting by start and stop codons)
 
         for j,prot_ids in enumerate(matching_seq_proteins):
-            for k,prot_id in enumerate(prot_ids):                
+            for k,prot_id in enumerate(prot_ids):         
                 if prot_id.startswith('ENSP'):
                     prot_id = prot_id.split('_', 1)[0]
                     #matching_transcripts.append(tr_id_df.loc[prot_id]['TranscriptID'])                  
@@ -272,9 +272,10 @@ def process_row(index):
                 dna_alleles.append(';'.join(transcript_alleles))
         dna_alleles = list(dict.fromkeys(dna_alleles))
 
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'canonical', pep_type2, '', '|'.join(dna_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'canonical', pep_type2, '', '', '|'.join(dna_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
 
     # Here, the peptide doesn't match to any canonical (ENSP*) sequence -> annotate variation
+    matching_pep_changes = []           # all unique matching changes with coordinated mapped to this peptide
     matching_protein_changes = []       # all unique matching changes in the protein
     matching_DNA_alleles = []           # corresponding unique matches to changes in the DNA
     min_changes_found = 999999          # minimum number of found co-occurring changes (to derive the peptide type)
@@ -282,6 +283,7 @@ def process_row(index):
     has_canonical_alternative = False   # when all amino acid changes are reverted, the peptide matches a canonical sequence
     
     # Check if any of the peptides match to a variant outside of a haplotype 
+    # TODO: check the priority haplotypes x variants
     found_variant = False
 
     for i,protID in enumerate(matching_proteins):
@@ -323,7 +325,10 @@ def process_row(index):
             ref_prot_allele = protein_change.split(':', 1)[1].split('>', 1)[0].replace('I', 'L').replace('-', '')
             alt_prot_allele = protein_change.split(':', 2)[2].split('(', 1)[0].replace('I', 'L').replace('-', '')  # frameshifts are labelled with '(+fs)' at the end
 
-            if ((ref_prot_allele != alt_prot_allele) or protein_change.endswith('(+fs)')) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
+            if change_loc < pep_loc[0]:
+                has_frameshift = protein_change.endswith('(+fs)')
+
+            elif ((ref_prot_allele != alt_prot_allele) or protein_change.endswith('(+fs)')) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
                 # check if a frameshift happens in this peptide
                 has_frameshift = has_frameshift or protein_change.endswith('(+fs)')
 
@@ -340,6 +345,7 @@ def process_row(index):
                 else:
                     # All looks ok -> store this change as identified
                     matching_protein_changes.append(parent_transcript + ':' + protein_change)
+                    matching_pep_changes.append(str(change_pep_loc[0]) + ':' + ref_prot_allele + '>' + alt_prot_allele)
 
                     DNA_change_str = str(variant['chromosome']) + ':' + variant['DNA_change']
                     if DNA_change_str not in local_matching_alleles_DNA:
@@ -347,14 +353,6 @@ def process_row(index):
 
                     found_variant = True
                     min_changes_found = min(min_changes_found, 1)
-
-            else:
-                # check if frameshift happened before
-                if change_loc < pep_loc[0]:
-                    has_frameshift = protein_change.endswith('(+fs)')
-
-                # remember that that this is a translation of a canonical cDNA    
-                # min_changes_found = 0
 
             local_matching_alleles_DNA.sort(key=lambda x: int(x.split(':')[1]))
             matching_DNA_alleles.append(';'.join(local_matching_alleles_DNA))
@@ -373,6 +371,7 @@ def process_row(index):
             # Peptide location within the haplotype sequence, accounting for the offset of the start codon (if known, first M will be at position 0)
             pep_loc = [matching_protein_positions[i] - protein_start, matching_protein_positions[i] - protein_start + peptide_length]
             local_matching_changes_prot = []    # hits to changes in the protein for this haplotype
+            local_matching_changes_pep = []     # mapping of these changes to this peptide
             local_matching_alleles_DNA = []     # corresponding alleles in the DNA
 
             all_protein_changes = haplotype['all_protein_changes'].split(';')
@@ -391,7 +390,7 @@ def process_row(index):
                     has_frameshift = has_frameshift or ch.endswith('(+fs)')
                 
                 # is it not a synonymous mutation, and does it happen in this peptide?
-                elif (ref_prot_allele != alt_prot_allele) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
+                elif ((ref_prot_allele != alt_prot_allele) or ch.endswith('(+fs)')) and (change_loc >= pep_loc[0]) and (change_loc < pep_loc[1]):
                     # check if a frameshift happens in this peptide
                     has_frameshift = has_frameshift or ch.endswith('(+fs)')
 
@@ -404,11 +403,12 @@ def process_row(index):
 
                     # Sanity check: have we found the alternative allele in the peptide?
                     if found_allele != alt_prot_allele:
-                        log_file.write('peptide ' + row['ID'] + ' haplotype:' + protID + ' expected:' + alt_prot_allele + ' found: ' + row['Sequence'][:change_pep_loc[0]] + ' ' + row['Sequence'][change_pep_loc[0]:])
+                        log_file.write('PSM ' + row['ID'] + ' haplotype:' + protID + ' expected:' + alt_prot_allele + ' found: ' + row['Sequence'][:change_pep_loc[0]] + ' ' + row['Sequence'][change_pep_loc[0]:])
                     else:
                         # All looks ok -> store this change as identified
                         haplo_matching_changes.append([change_pep_loc[0], ref_prot_allele, alt_prot_allele])
                         local_matching_changes_prot.append(ch)
+                        local_matching_changes_pep.append(str(change_pep_loc[0]) + ':' + ref_prot_allele + '>' + alt_prot_allele)
                         chromosome = protID.split('chr',1)[1].split('_',1)[0]
                         local_matching_alleles_DNA.append(chromosome + ':' + all_DNA_changes[j])
 
@@ -427,6 +427,7 @@ def process_row(index):
 
             if (len(local_matching_changes_prot) > 0):
                 prot_changes_str = parent_transcript + ':' + ';'.join(local_matching_changes_prot)
+                matching_pep_changes.append(';'.join(local_matching_changes_pep))
             else:
                 prot_changes_str = ''
 
@@ -442,6 +443,7 @@ def process_row(index):
     matching_genes = [ gene_id_df.loc[trID]['GeneID'] for trID in matching_transcripts ]
     matching_genes = list(dict.fromkeys(matching_genes))    # remove duplicate gene IDs
     matching_DNA_alleles = list(dict.fromkeys(matching_DNA_alleles)) # remove duplicate combinations of alleles
+    matching_pep_changes = list(dict.fromkeys(matching_pep_changes))
 
     # Check if we have found any alternative alleles. If not, set the alleles counter to 0.
     has_alt_allele = any([ ('>' in alleles_str) for alleles_str in matching_DNA_alleles ])
@@ -454,19 +456,19 @@ def process_row(index):
         pep_type2 = 'multi-gene'
 
     if found_variant:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'single-variant(ProVar)', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'single-variant(ProVar)', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
     if (min_changes_found > 1) and has_canonical_alternative:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'multi-variant', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'multi-variant', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
     elif has_alt_allele and has_canonical_alternative:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'single-variant', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'single-variant', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
     elif has_alt_allele and not has_canonical_alternative and not has_frameshift:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'variant-no-ref', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'variant-no-ref', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
     elif has_frameshift:
         # Sequence contains a result of a frameshift, the mutation occurs either in the peptide, or upstream in the protein before it
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'frameshift', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'frameshift', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
     else:   
         # looks like a translation of a canonical CDS sequence that doesn't have a canonical protein in Ensembl (e.g., alternative reading frame)
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'canonical-no-ref', pep_type2, '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'canonical-no-ref', pep_type2, '|'.join(matching_pep_changes), '|'.join(matching_protein_changes), '|'.join(matching_DNA_alleles), ';'.join(matching_proteins), ';'.join(matching_transcripts), ';'.join(matching_genes), ';'.join([str(pos) for pos in matching_protein_positions]), ';'.join(reading_frames)]
 
 # store results
 with Pool(args.threads) as p:
