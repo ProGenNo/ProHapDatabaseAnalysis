@@ -79,6 +79,6 @@ rule get_discoverable_variants:
 		hap=config['haplo_db_table']
 	output:
 		config['discoverable_variant_list']
-    conda: "envs/main_env.yaml"
+	conda: "envs/main_env.yaml"
 	shell:
 		"python src/get_discoverable_variants.py -i {input.pep} -hap_tsv {input.hap} -o {output}; "
