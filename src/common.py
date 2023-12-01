@@ -55,9 +55,6 @@ def read_fasta(filename):
         if 'position_within_protein:' in description:
             seq_positions = [ int(pos) for pos in description.split('position_within_protein:', 1)[1].split(' ', 1)[0].split(';') ]
 
-        if 'protein_IDs:' in description:
-            matching_sequences = description.split('protein_IDs:', 1)[1].split(' ', 1)[0].split(';')
-
         if 'matching_proteins:' in description:
             proteinLists = description.split('matching_proteins:', 1)[1].split(' ', 1)[0].split(';')
             matching_proteins = [ l.split(',') for l in proteinLists ]
@@ -66,7 +63,7 @@ def read_fasta(filename):
             rfLists = description.split('reading_frame:', 1)[1].split(maxsplit=1)[0].split(';')
             reading_frames = [ l.split(',') for l in rfLists ]
 
-        all_proteins[proteinID] = {'tag': tag, 'accession': accession, 'description': description.replace('\n', ''), 'sequence': sequence, 'seq_positions': seq_positions, 'matching_sequences': matching_sequences, 'matching_proteins': matching_proteins, 'reading_frames': reading_frames}
+        all_proteins[proteinID] = {'tag': tag, 'accession': accession, 'description': description.replace('\n', ''), 'sequence': sequence, 'seq_positions': seq_positions, 'matching_proteins': matching_proteins, 'reading_frames': reading_frames}
 
         metadata = line
         sequence = ""
