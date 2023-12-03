@@ -187,11 +187,11 @@ def process_gene(geneIdx):
 
 print ('Annotating proteome coverage.')
 
-#with Pool(args.threads) as p:
-#gene_results = list(tqdm(p.imap_unordered(process_gene, range(len(all_genes))), total=len(all_genes)))
-gene_results = list(map(process_gene, range(len(all_genes))))
-#    p.close()
-#    p.join()
+with Pool(args.threads) as p:
+    gene_results = list(tqdm(p.imap_unordered(process_gene, range(len(all_genes))), total=len(all_genes)))
+#gene_results = list(map(process_gene, range(len(all_genes))))
+    p.close()
+    p.join()
 
 for i, result in enumerate(gene_results):
     if (len(result[0]) == 0):
