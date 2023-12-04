@@ -117,7 +117,7 @@ rule digest_proteins_pop:
     input:
         "data/proteindb_{popul}.tsv"
     output:
-        temp('results/peptide_list_{enz}_{popul}.tsv')
+        temp('results/pop_peptide_list_{enz}_{popul}.tsv')
     conda: "envs/main_env.yaml"
     shell:
         "mkdir -p results; "
@@ -125,9 +125,9 @@ rule digest_proteins_pop:
     
 rule merge_peptide_lists_pop:
     input:
-        expand('results/peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES)
+        expand('results/pop_peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES)
     output:
-        "results/peptide_list_full_{popul}.tsv"
+        "results/pop_peptide_list_full_{popul}.tsv"
     conda: "envs/main_env.yaml"
     params:
         input_file_list = ','.join(expand('results/peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES))
@@ -136,7 +136,7 @@ rule merge_peptide_lists_pop:
 
 rule peptides_annotate_variation_pop:
     input:
-        peptides="results/peptide_list_full_{popul}.tsv",
+        peptides="results/pop_peptide_list_full_{popul}.tsv",
         haplo_db="data/haplotypes_{popul}.tsv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
