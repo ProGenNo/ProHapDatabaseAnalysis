@@ -109,7 +109,7 @@ result_data = []
 current_gene = ''
  # accessed by protein ID, 'peptides' list of lists, 3 values: start, length, type
 
-total_aa = [0, 0, 0, 0]
+total_aa = [0, 0, 0, 0, 0]
 
 all_peptides = {}
 
@@ -138,7 +138,11 @@ def process_gene(geneIdx):
             pep_type = row['pep_type1']
             
             if (row['covered_changes_peptide'] == row['covered_changes_peptide']):
-                prot_changes = row['covered_changes_protein'].split('|')[i]
+                try:
+                   prot_changes = row['covered_changes_protein'].split('|')[i]
+                except:
+                   print(row['ID'], trID, row['pep_type1'], row['matching_transcripts'], row['covered_changes_protein'])
+                   continue
                 if (pep_type == 'single-variant') and (';' in prot_changes):
                     continue    # peptide was downgraded -> does not cover these variants reliably 
 
@@ -203,7 +207,7 @@ for i, result in enumerate(gene_results):
     total_aa[1] += result[1][1]
     total_aa[2] += result[1][2]
     total_aa[3] += result[1][3]
-    total_aa[4] += result[1][3]
+    total_aa[4] += result[1][4]
 
 print ('Done.')
 
