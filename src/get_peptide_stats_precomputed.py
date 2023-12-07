@@ -8,12 +8,12 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-i", dest="input_file", required=True,
                     help="input TSV file, peptide stats by protein")
 
-parser.add_argument("-f", dest="fasta_file", required=True,
-                    help="input FASTA file")
+parser.add_argument("-ref_fa", dest="ref_fasta", required=True,
+                    help="reference proteome (Ensembl) fasta file") 
 
 args = parser.parse_args()
 
-all_proteins = read_fasta(args.fasta_file)
+all_proteins = read_fasta(args.ref_fasta)
 
 pep_df = pd.read_csv(args.input_file, sep='\t', header=0)
 
@@ -31,8 +31,7 @@ for index, row in pep_df.iterrows():
 total_aa_sum = 0
 
 for protein in all_proteins.values():
-    if ('ensref' in protein['tag']):
-        total_aa_sum += len(protein['sequence'].replace('*', ''))
+    total_aa_sum += len(protein['sequence'].replace('*', ''))
 
 print ("Proteome length:", total_aa_sum)
 print ("Canonical proteome: %d AAs - %.2f %%,\npossible single-variant peptides: %d AAs - %.2f %%,\npossible multi-variant peptides: %d AAs - %.2f %%,\npossible frameshift peptides: %d AAs - %.2f %%,\nsequences not matching to peptides: %d AAs - %.2f %%" % (total_aa[1], (total_aa[1] / total_aa_sum) * 100, total_aa[2], (total_aa[2] / total_aa_sum) * 100, total_aa[3], (total_aa[3] / total_aa_sum) * 100,total_aa[4], (total_aa[4] / total_aa_sum) * 100, (total_aa_sum - sum(total_aa[1:])), ((total_aa_sum - sum(total_aa[1:])) / total_aa_sum) * 100))
