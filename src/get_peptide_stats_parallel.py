@@ -119,6 +119,7 @@ all_genes = gene_id_df['GeneID'].drop_duplicates().tolist()
 def process_gene(geneIdx):
     geneID = all_genes[geneIdx]
     local_df = pep_df[(pep_df['matching_genes'] == pep_df['matching_genes']) & pep_df['matching_genes'].str.contains(geneID)]
+    gene_transcripts = gene_id_df[gene_id_df['GeneID'] == geneID]['TranscriptID'].tolist()
     
     protein_peptides = {}       # dictionary of mapptings between peptides and proteins -> to be aggregated into coverage stats
     local_aa = [0, 0, 0, 0, 0]     # length of covered regions by type: 0: should not be covered; 1: always canonical; 2: possibly single-variant; 3: possibly multi-variant
@@ -130,9 +131,12 @@ def process_gene(geneIdx):
             continue
 
         pep_length = len(row['sequence'])
+        matching_transcripts = row['matching_transcripts'].split(';')
+        relevant_transcript_idx = [ i for i,trID in matching_transcripts if trID in gene_transcripts ]
 
         # align this peptide to each matching protein (haplotype)
-        for i, trID in enumerate(row['matching_transcripts'].split(';')):
+        for i in relevant_transcript_idx:
+            trID = matching_transcripts[i]
             ref_stable_id = trID.split('.')[0]
 
             pep_type = row['pep_type1']
@@ -141,7 +145,7 @@ def process_gene(geneIdx):
                 try:
                    prot_changes = row['covered_changes_protein'].split('|')[i]
                 except:
-                   print(row['ID'], trID, row['pep_type1'], row['matching_transcripts'], row['covered_changes_protein'])
+                   # print(row['ID'], trID, row['pep_type1'], row['matching_transcripts'], row['covered_changes_protein'])
                    continue
                 if (pep_type == 'single-variant') and (';' in prot_changes):
                     continue    # peptide was downgraded -> does not cover these variants reliably 
