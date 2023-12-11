@@ -183,7 +183,8 @@ rule collect_coverage_stats:
         ref_fasta=config['reference_fasta']
     output:
         "results/peptide_coverage_stats.tsv"
-    conda: "envs/main_env.yaml"params:
+    conda: "envs/main_env.yaml"
+    params:
         input_file_list = ','.join(["results/pep_coverage.tsv"] + expand("results/pep_coverage_{popul}.tsv", popul=POPULATIONS)),
         populations = ','.join(['all'] + POPULATIONS)
     shell:
