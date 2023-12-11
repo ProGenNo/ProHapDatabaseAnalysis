@@ -1,6 +1,6 @@
 configfile: "config.yaml"
 
-ENZYMES = ["Trypsin", "Lys-C", "Lys-N", "Glu-C", "Asp-N"]
+ENZYMES = ["Trypsin", "Lys-C", "Lys-N", "Glu-C", "Asp-N", "Chymotrypsin"]
 POPULATIONS = ["EUR", "EAS", 'SAS', 'AMR', 'AFR']
 
 rule all:
@@ -8,7 +8,8 @@ rule all:
         pept=config['final_peptide_list'],
         discoverable_vars=config['discoverable_variant_list'],
         haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else []),
-        populations_proteome_coverage=expand("results/pep_coverage_{popul}.py", popul=POPULATIONS)
+        proteome_coverage="results/pep_coverage.tsv",
+        populations_proteome_coverage=expand("results/pep_coverage_{popul}.tsv", popul=POPULATIONS)
 
 rule list_all_possible_variants:
     input:
@@ -24,10 +25,12 @@ rule digest_proteins:
         config['full_fasta_file']
     output:
         temp('results/peptide_list_{enz}.tsv')
+    params:
+        missed_cl=lambda wildcards: 4 if (wildcards.enz == 'Chymotrypsin') else 2
     conda: "envs/main_env.yaml"
     shell:
         "mkdir -p results; "
-        "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output}"
+        "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output} -m {params.missed_cl}"
 
 rule merge_peptide_lists:
     input:
@@ -93,12 +96,13 @@ rule get_coverage:
         fasta_file=config['full_fasta_file'],
         ref_fasta=config['reference_fasta']
     output:
-        "results/pep_coverage.py"
+        "results/pep_coverage.tsv"
     params:
         max_cores=config['max_cores']
     conda: "envs/main_env.yaml"
+    threads: config['max_cores']
     shell:
-        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input_tr_ids} -o {output}"
+        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
 
 rule filter_to_population:
     input:
@@ -106,41 +110,44 @@ rule filter_to_population:
         fasta=config['full_fasta_file']
     output:
         hap="data/haplotypes_{popul}.tsv",
-        fasta="data/proteindb_{popul}.tsv"
+        fasta="data/proteindb_{popul}.fa"
     params:
         max_cores=config['max_cores']
+    threads: config['max_cores']
     conda: "envs/main_env.yaml"
     shell:
-        "python src/filter_haplotypes.py -f {input.fasta} -hap_tsv {input.hap} -pop {wildcards.pop} -t {params.max_cores} -output_tsv {output.hap} -output_fasta {output.fasta}"
+        "python src/filter_haplotypes.py -f {input.fasta} -hap_tsv {input.hap} -pop {wildcards.popul} -t {params.max_cores} -output_tsv {output.hap} -output_fasta {output.fasta}"
 
 rule digest_proteins_pop:
     input:
-        "data/proteindb_{popul}.tsv"
+        "data/proteindb_{popul}.fa"
     output:
         temp('results/pop_peptide_list_{enz}_{popul}.tsv')
+    params:
+        missed_cl=lambda wildcards: 4 if (wildcards.enz == 'Chymotrypsin') else 2
     conda: "envs/main_env.yaml"
     shell:
         "mkdir -p results; "
-        "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output}"
+        "python3 src/create_peptide_list.py -i {input} -enz {wildcards.enz} -o {output} -m {params.missed_cl}"
     
 rule merge_peptide_lists_pop:
     input:
         expand('results/pop_peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES)
     output:
-        "results/pop_peptide_list_full_{popul}.tsv"
+        "results/pop_{popul}_peptide_list_full.tsv"
     conda: "envs/main_env.yaml"
     params:
-        input_file_list = ','.join(expand('results/peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES))
+        input_file_list = ','.join(expand('results/pop_peptide_list_{enz}_{{popul}}.tsv', enz=ENZYMES))
     shell:
         "python3 src/merge_tables.py -i {params.input_file_list} -o {output}"
 
 rule peptides_annotate_variation_pop:
     input:
-        peptides="results/pop_peptide_list_full_{popul}.tsv",
+        peptides="results/pop_{popul}_peptide_list_full.tsv",
         haplo_db="data/haplotypes_{popul}.tsv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
-        fasta_file="data/proteindb_{popul}.tsv",
+        fasta_file="data/proteindb_{popul}.fa",
         ref_fasta=config['reference_fasta']
     output:
         "results/peptide_list_{popul}.csv"
@@ -159,14 +166,15 @@ rule get_coverage_pop:
         pep="results/peptide_list_{popul}.csv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
-        fasta_file="data/proteindb_{popul}.tsv",
+        fasta_file="data/proteindb_{popul}.fa",
         ref_fasta=config['reference_fasta']
     output:
-        "results/pep_coverage_{popul}.py"
+        "results/pep_coverage_{popul}.tsv"
     params:
         max_cores=config['max_cores']
+    threads: config['max_cores']
     conda: "envs/main_env.yaml"
     shell:
-        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input_tr_ids} -o {output}"
+        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
 
     
