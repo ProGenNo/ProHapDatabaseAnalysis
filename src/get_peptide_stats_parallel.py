@@ -131,8 +131,8 @@ def process_gene(geneIdx):
             continue
 
         pep_length = len(row['sequence'])
-        matching_transcripts = row['matching_transcripts'].split(';')
-        relevant_transcript_idx = [ i for i,trID in matching_transcripts if trID in gene_transcripts ]
+        matching_transcripts = [ trID.split('.',1)[0] for trID in row['matching_transcripts'].split(';') ]
+        relevant_transcript_idx = [ i for i,trID in enumerate(matching_transcripts) if trID in gene_transcripts ]
 
         # align this peptide to each matching protein (haplotype)
         for i in relevant_transcript_idx:
@@ -221,9 +221,8 @@ result_df.to_csv(args.output_file, sep='\t', header=True, index=False)
 # check the length of the proteone (= sum of lengths of all canonical proteins in fasta)
 total_aa_sum = 0
 
-for protein in all_proteins.values():
-    if ('ensref' in protein['tag']):
-        total_aa_sum += len(protein['sequence'].replace('*', ''))
+for protein in ref_proteins.values():
+    total_aa_sum += len(protein['sequence'].replace('*', ''))
 
 print ("Proteome length:", total_aa_sum)
 print ("Canonical proteome: %d AAs - %.2f %%,\npossible single-variant peptides: %d AAs - %.2f %%,\npossible multi-variant peptides: %d AAs - %.2f %%,\npossible frameshift peptides: %d AAs - %.2f %%,\nsequences not matching to peptides: %d AAs - %.2f %%" % (total_aa[1], (total_aa[1] / total_aa_sum) * 100, total_aa[2], (total_aa[2] / total_aa_sum) * 100, total_aa[3], (total_aa[3] / total_aa_sum) * 100,total_aa[4], (total_aa[4] / total_aa_sum) * 100, (total_aa_sum - sum(total_aa[1:])), ((total_aa_sum - sum(total_aa[1:])) / total_aa_sum) * 100))
