@@ -8,8 +8,7 @@ rule all:
         pept=config['final_peptide_list'],
         discoverable_vars=config['discoverable_variant_list'],
         haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else []),
-        proteome_coverage="results/pep_coverage.tsv",
-        populations_proteome_coverage=expand("results/pep_coverage_{popul}.tsv", popul=POPULATIONS)
+        proteome_coverage="results/peptide_coverage_stats.tsv"
 
 rule list_all_possible_variants:
     input:
@@ -177,4 +176,16 @@ rule get_coverage_pop:
     shell:
         "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
 
+rule collect_coverage_stats:
+    input:
+        pop_coverage=expand("results/pep_coverage_{popul}.tsv", popul=POPULATIONS),
+        all_coverage="results/pep_coverage.tsv",
+        ref_fasta=config['reference_fasta']
+    output:
+        "results/peptide_coverage_stats.tsv"
+    conda: "envs/main_env.yaml"params:
+        input_file_list = ','.join(["results/pep_coverage.tsv"] + expand("results/pep_coverage_{popul}.tsv", popul=POPULATIONS)),
+        populations = ','.join(['all'] + POPULATIONS)
+    shell:
+        "python src/get_peptide_stats_aggregated.py -i {params.input_file_list} -pop {params.populations} -ref_fa {input.ref_fasta} -o {output}"
     
