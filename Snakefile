@@ -7,6 +7,7 @@ rule all:
     input:
         pept=config['final_peptide_list'],
         discoverable_vars=config['discoverable_variant_list'],
+        var_stats=config['variant_stats'],
         haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else []),
         proteome_coverage="results/peptide_coverage_stats.tsv"
 
@@ -86,6 +87,15 @@ rule get_discoverable_variants:
 	conda: "envs/main_env.yaml"
 	shell:
 		"python src/get_discoverable_variants.py -i {input.pep} -hap_tsv {input.hap} -o {output}; "
+
+rule collect_variant_stats:
+    input:
+        all=config['possible_variant_list'],
+        discoverable=config['discoverable_variant_list']
+    output:
+        config['variant_stats']
+    shell:
+        "python src/get_variant_counts.py -i_all {input.all} -i_disc {input.disc} > {output}"
 
 rule get_coverage:
     input:

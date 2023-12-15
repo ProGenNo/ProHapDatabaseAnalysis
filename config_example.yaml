@@ -17,3 +17,4 @@ annot_haplo_db:               # Haplotype metadata TSV annotate with variant con
 possible_variant_list:        # List of variants included in the haplotypes, along with all possible consequences
 final_peptide_list:           # List of peptides after in-silico digestion and annotation of covered alleles
 discoverable_variant_list:    # List of variants discoverable in peptides after in-silico digestion
+variant_stats:                # Text file containing aggregated variant statistics per consequence type and peptide type
