@@ -18,7 +18,7 @@ variants_aggregated = {}
 
 for index,row in haplo_db.iterrows():
     var_types = row['variant_types'].split(';')
-    var_ids = [ str(row['chromosome']) + ch for ch in row['DNA_changes'].split(';')]
+    var_ids = [ str(row['chromosome']) +':' + ch for ch in row['DNA_changes'].split(';')]
 
     for i,varID in enumerate(var_ids):
         if (varID in variants_aggregated):
