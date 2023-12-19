@@ -95,7 +95,7 @@ rule collect_variant_stats:
     output:
         config['variant_stats']
     shell:
-        "python src/get_variant_counts.py -i_all {input.all} -i_disc {input.disc} > {output}"
+        "python src/get_variant_counts.py -i_all {input.all} -i_disc {input.discoverable} > {output}"
 
 rule get_coverage:
     input:

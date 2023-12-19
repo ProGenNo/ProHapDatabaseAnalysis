@@ -22,7 +22,7 @@ args = parser.parse_args()
 print ("Reading", args.ref_fasta)
 all_proteins = read_fasta(args.ref_fasta)
 
-inputs = args.input_filenames.split(",")
+inputs = args.input_files.split(",")
 populations = args.populations.split(',')
 
 if (len(inputs) != len(populations)):
