@@ -212,7 +212,7 @@ def process_row(index):
     # crap match = any matching sequence is a contaminant
     is_contaminant = any([ 'cont' in fasta_entries[fastaID]['tag'] for fastaID in fasta_accessions ])
     if is_contaminant:
-        return [row['ID'], row['Sequence'], row['Enzyme'], 'contaminant', 'contaminant', '', '', '', '', '', '', '', '', '']
+        return [row['ID'], row['Sequence'], row['Enzyme'], 'contaminant', 'contaminant', '-', '-', '-', '-', '-', '-', '-', '-', '-']
 
     # concentrate all matching proteins (haplotype or stable protein ids)
     matching_proteins = []
@@ -284,7 +284,6 @@ def process_row(index):
     has_canonical_alternative = False   # when all amino acid changes are reverted, the peptide matches a canonical sequence
     
     # Check if any of the peptides match to a variant outside of a haplotype 
-    # TODO: check the priority haplotypes x variants
     found_variant = False
 
     for i,protID in enumerate(matching_proteins):
