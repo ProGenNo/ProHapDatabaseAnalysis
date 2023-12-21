@@ -39,26 +39,35 @@ if (args.enzyme not in enzyme_patterns['enzymes']):
 cleavage_pattern = enzyme_patterns['enzymes'][args.enzyme]
 json_file.close()
 
-all_peptides = []
-all_matching_proteins = []
-all_peptide_positions = []
+mc_peptides = [ [] for i in range(cleavage_pattern['maxMissedCleavages']+1) ]
+mc_matching_proteins = [ [] for i in range(cleavage_pattern['maxMissedCleavages']+1) ]
+mc_peptide_positions = [ [] for i in range(cleavage_pattern['maxMissedCleavages']+1) ]
 
 print ('Creating the peptide list...')
 for prot_idx,protein in enumerate(list(all_proteins.values())):
-    peptides, peptide_posotions = digest(protein['sequence'], cleavage_pattern['maxMissedCleavages'], args.min_len, args.max_len, cleavage_pattern)
+    peptides, peptide_posotions, missed_cleavages = digest(protein['sequence'], cleavage_pattern['maxMissedCleavages'], args.min_len, args.max_len, cleavage_pattern)
 
     for i,peptide in enumerate(peptides):
-        idx = bisect.bisect_left(all_peptides, peptide)
+        mc = missed_cleavages[i]
+        idx = bisect.bisect_left(mc_peptides[mc], peptide)
 
-        if ((idx >= len(all_peptides)) or (all_peptides[idx] != peptide)):
-            all_peptides.insert(idx, peptide)
-            all_matching_proteins.insert(idx, [protein['accession']])
-            all_peptide_positions.insert(idx, [str(peptide_posotions[i])])
+        if ((idx >= len(mc_peptides[mc])) or (mc_peptides[mc][idx] != peptide)):
+            mc_peptides[mc].insert(idx, peptide)
+            mc_matching_proteins[mc].insert(idx, [protein['accession']])
+            mc_peptide_positions[mc].insert(idx, [str(peptide_posotions[i])])
         else:
-            all_matching_proteins[idx].append(protein['accession'])
-            all_peptide_positions[idx].append(str(peptide_posotions[i]))
+            mc_matching_proteins[mc][idx].append(protein['accession'])
+            mc_peptide_positions[mc][idx].append(str(peptide_posotions[i]))
     print (prot_idx, '/', len(all_proteins), end='\r')
 
+all_peptides = []
+all_peptide_positions = []
+all_matching_proteins = []
+
+for i in range(cleavage_pattern['maxMissedCleavages']+1):
+    all_peptides.extend(mc_peptides[i])
+    all_matching_proteins.extend(mc_matching_proteins[i])
+    all_peptide_positions.extend(mc_peptide_positions[i])
 
 df_data = [ ['pep_' + hex(i)[2:], all_peptides[i], args.enzyme, ';'.join(all_matching_proteins[i]), ';'.join(positions)] for i,positions in enumerate(all_peptide_positions) ]
 
