@@ -85,7 +85,7 @@ rule collect_variant_stats:
 
 rule get_coverage:
     input:
-        pep=config['final_peptide_list'],
+        pep="results/peptide_list_ALL.tsv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file=config['full_fasta_file'],
@@ -128,7 +128,7 @@ rule peptides_annotate_variation_pop:
         haplo_db=config['popul_haplo_table'],
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
-        fasta_file="data/proteindb_{popul}.fa",
+        fasta_file=config['population_fasta_file'],
         ref_fasta=config['reference_fasta']
     output:
         temp("results/peptide_temp_list_{popul}.csv")
@@ -144,7 +144,7 @@ rule peptides_annotate_variation_pop:
 rule add_peptide_frequency:
     input:
         pep="results/peptide_temp_list_{popul}.csv",
-        haplo_db="data/haplotypes_{popul}.tsv"
+        haplo_db=config['popul_haplo_table']
     output:
         "results/peptide_list_{popul}.csv"
     params:
@@ -186,7 +186,7 @@ rule get_coverage_pop:
         pep="results/peptide_list_{popul}.csv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
-        fasta_file="data/proteindb_{popul}.fa",
+        fasta_file=config['population_fasta_file'],
         ref_fasta=config['reference_fasta']
     output:
         "results/pep_coverage_{popul}.tsv"
