@@ -5,18 +5,19 @@ POPULATIONS = ["EUR", "EAS", 'SAS', 'AMR', 'AFR']
 
 rule all:
     input:
-        pept=config['final_peptide_list'],
-        discoverable_vars=config['discoverable_variant_list'],
-        var_stats=config['variant_stats'],
-        haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else []),
+        pept="results/peptide_list_ALL.tsv",
+        discoverable_vars="results/all_discoverable_variants.tsv",
+        var_stats="results/variant_stats.txt",
+        haplo_vars="results/all_included_variants.csv",
         proteome_coverage="results/peptide_coverage_stats.tsv",
-        freq_coverage="results/peptide_coverage_freq_log.tsv"
+        freq_coverage="results/peptide_coverage_freq_log.tsv",
+        freq_per_transcript="results/transcript_freqs_by_superpop.tsv"
 
 rule list_all_possible_variants:
     input:
         config['haplo_db_table']
     output:
-        v=config['possible_variant_list']
+        v="results/all_included_variants.csv"
     conda: "envs/main_env.yaml"
     shell:
         "python3 src/haplo_extract_all_vars.py -hap_tsv {input} -o {output.v} "
@@ -37,7 +38,7 @@ rule merge_peptide_lists:
     input:
         expand('results/peptide_list_{enz}.tsv', enz=ENZYMES)
     output:
-        "results/peptide_list_full.tsv"
+        temp("results/peptide_list_full.tsv")
     conda: "envs/main_env.yaml"
     params:
         input_file_list = ','.join(expand('results/peptide_list_{enz}.tsv', enz=ENZYMES))
@@ -53,7 +54,7 @@ rule peptides_annotate_variation:
         fasta_file=config['full_fasta_file'],
         ref_fasta=config['reference_fasta']
     output:
-        config['final_peptide_list']
+        "results/peptide_list_ALL.tsv"
     params:
         haplotype_prefix=config['haplotype_protein_prefix'],
         max_cores=config['max_cores'],
@@ -65,20 +66,20 @@ rule peptides_annotate_variation:
 
 rule get_discoverable_variants:
 	input:
-		pep=config['final_peptide_list'],
+		pep="results/peptide_list_ALL.tsv",
 		hap=config['haplo_db_table']
 	output:
-		config['discoverable_variant_list']
+		"results/all_discoverable_variants.tsv"
 	conda: "envs/main_env.yaml"
 	shell:
 		"python src/get_discoverable_variants.py -i {input.pep} -hap_tsv {input.hap} -o {output}; "
 
 rule collect_variant_stats:
     input:
-        all=config['possible_variant_list'],
-        discoverable=config['discoverable_variant_list']
+        all="results/all_included_variants.csv",
+        discoverable="results/all_discoverable_variants.tsv"
     output:
-        config['variant_stats']
+        "results/variant_stats.txt"
     shell:
         "python src/get_variant_counts.py -i_all {input.all} -i_disc {input.discoverable} > {output}"
 
@@ -98,23 +99,9 @@ rule get_coverage:
     shell:
         "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
 
-rule filter_to_population:
-    input:
-        hap=config['haplo_db_table'],
-        fasta=config['full_fasta_file']
-    output:
-        hap="data/haplotypes_{popul}.tsv",
-        fasta="data/proteindb_{popul}.fa"
-    params:
-        max_cores=config['max_cores']
-    threads: config['max_cores']
-    conda: "envs/main_env.yaml"
-    shell:
-        "python src/filter_haplotypes.py -f {input.fasta} -hap_tsv {input.hap} -pop {wildcards.popul} -t {params.max_cores} -output_tsv {output.hap} -output_fasta {output.fasta}"
-
 rule digest_proteins_pop:
     input:
-        "data/proteindb_{popul}.fa"
+        config['population_fasta_file']
     output:
         temp('results/pop_peptide_list_{enz}_{popul}.tsv')
     params:
@@ -138,13 +125,13 @@ rule merge_peptide_lists_pop:
 rule peptides_annotate_variation_pop:
     input:
         peptides="results/pop_{popul}_peptide_list_full.tsv",
-        haplo_db="data/haplotypes_{popul}.tsv",
+        haplo_db=config['popul_haplo_table'],
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file="data/proteindb_{popul}.fa",
         ref_fasta=config['reference_fasta']
     output:
-        "results/peptide_list_{popul}.csv"
+        temp("results/peptide_temp_list_{popul}.csv")
     params:
         haplotype_prefix=config['haplotype_protein_prefix'],
         max_cores=config['max_cores'],
@@ -156,10 +143,10 @@ rule peptides_annotate_variation_pop:
 
 rule add_peptide_frequency:
     input:
-        pep="results/peptide_list_{popul}.csv",
+        pep="results/peptide_temp_list_{popul}.csv",
         haplo_db="data/haplotypes_{popul}.tsv"
     output:
-        "results/peptides_freq_{popul}.csv"
+        "results/peptide_list_{popul}.csv"
     params:
         max_cores=config['max_cores']
     threads: config['max_cores']
@@ -169,7 +156,7 @@ rule add_peptide_frequency:
 
 rule get_coverage_freq_pop:
     input:
-        pep="results/peptides_freq_{popul}.csv",
+        pep="results/peptide_list_{popul}.csv",
         tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv'
     output:
@@ -223,4 +210,20 @@ rule collect_coverage_stats:
         populations = ','.join(['all'] + POPULATIONS)
     shell:
         "python src/get_peptide_stats_aggregated.py -i {params.input_file_list} -pop {params.populations} -ref_fa {input.ref_fasta} -o {output}"
+    
+rule get_frequencies_per_transcript:
+    input:
+        all_haplotypes=expand(config['popul_haplo_table'], popul=POPULATIONS),
+        tr_id='data/protein_transcript_ids_110.csv',
+        samples='igsr_samples_filtered.tsv'
+    output:
+        "results/transcript_freqs_by_superpop.tsv"
+    conda: "envs/main_env.yaml"
+    params:
+        input_file_list = ','.join(expand(config['popul_haplo_table'], popul=POPULATIONS)),
+        max_cores=config['max_cores']
+    threads: config['max_cores']
+    shell:
+        "python src/extract_population_frequencies.py -i {params.input_file_list} -transcripts {input.tr_id} -s {input.samples} -t {params.max_cores} -o_superpop {output}"
+    
     
