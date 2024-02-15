@@ -9,7 +9,8 @@ rule all:
         discoverable_vars=config['discoverable_variant_list'],
         var_stats=config['variant_stats'],
         haplo_vars=expand('{proxy}', proxy=[config['possible_variant_list']] if len(config["haplo_db_table"]) > 0 else []),
-        proteome_coverage="results/peptide_coverage_stats.tsv"
+        proteome_coverage="results/peptide_coverage_stats.tsv",
+        freq_coverage="results/peptide_coverage_freq_log.tsv"
 
 rule list_all_possible_variants:
     input:
@@ -152,6 +153,46 @@ rule peptides_annotate_variation_pop:
     conda: "envs/main_env.yaml"
     shell:
         "python src/peptides_annotate_variation.py -i {input.peptides} -hap_tsv {input.haplo_db} -hap_prefix {params.haplotype_prefix} -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; "
+
+rule add_peptide_frequency:
+    input:
+        pep="results/peptide_list_{popul}.csv",
+        haplo_db="data/haplotypes_{popul}.tsv"
+    output:
+        "results/peptides_freq_{popul}.csv"
+    params:
+        max_cores=config['max_cores']
+    threads: config['max_cores']
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/peptides_add_frequency.py -i {input.pep} -hap_tsv {input.haplo_db} -pop {wildcards.popul} -t {params.max_cores} -o {output}"
+
+rule get_coverage_freq_pop:
+    input:
+        pep="results/peptides_freq_{popul}.csv",
+        tr_ids='data/protein_transcript_ids_110.csv',
+        gene_ids='data/gene_transcript_ids_110.csv'
+    output:
+        "results/pep_freq_coverage_{popul}.tsv"
+    params:
+        max_cores=config['max_cores']
+    threads: config['max_cores']
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/get_peptide_coverage_freq.py -i {input.pep} -t {params.max_cores} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
+
+rule collect_coverage_freq_stats:
+    input:
+        pop_coverage=expand("results/pep_freq_coverage_{popul}.tsv", popul=POPULATIONS),
+        ref_fasta=config['reference_fasta']
+    output:
+        "results/peptide_coverage_freq_log.tsv"
+    conda: "envs/main_env.yaml"
+    params:
+        input_file_list = ','.join(expand("results/pep_freq_coverage_{popul}.tsv", popul=POPULATIONS)),
+        populations = ','.join(POPULATIONS)
+    shell:
+        "python src/get_peptide_stats_aggregated_freq.py -i {params.input_file_list} -pop {params.populations} -ref_fa {input.ref_fasta} -o {output}"
 
 rule get_coverage_pop:
     input:
