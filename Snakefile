@@ -220,10 +220,10 @@ rule get_frequencies_per_transcript:
         "results/transcript_freqs_by_superpop.tsv"
     conda: "envs/main_env.yaml"
     params:
-        input_file_list = ','.join(expand(config['popul_haplo_table'], popul=POPULATIONS)),
+        input_filename = lambda wildcards: config['popul_haplo_table'],
         max_cores=config['max_cores']
     threads: config['max_cores']
     shell:
-        "python src/extract_population_frequencies.py -i {params.input_file_list} -transcripts {input.tr_id} -s {input.samples} -t {params.max_cores} -o_superpop {output}"
+        "python src/extract_population_frequencies.py -i {params.input_filename} -transcripts {input.tr_id} -s {input.samples} -t {params.max_cores} -o_superpop {output}"
     
     

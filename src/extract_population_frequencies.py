@@ -35,7 +35,7 @@ all_transcripts = pd.read_csv(args.transcript_list)['TranscriptID'].apply(lambda
 superpop_codes = samples_df['Superpopulation code'].drop_duplicates().tolist()
 
 for pop_code in superpop_codes:
-    filename = args.input_filename.replace('{pop}', pop_code)
+    filename = args.input_filename.replace('{popul}', pop_code)
     print ('Reading', filename)
     dataframes[pop_code] = pd.read_table(filename)
 
