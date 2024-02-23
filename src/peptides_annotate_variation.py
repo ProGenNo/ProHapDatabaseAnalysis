@@ -132,16 +132,6 @@ for trID in transcript_allele_locations:
         continue
     transcript_allele_locations[trID] = { 'pos': positions, 'allele': alleles, 'DNA': uniq_alleles_DNA }
 
-print ("Reading", args.transcript_ids)
-tr_id_df = pd.read_csv(args.transcript_ids, header=0)
-
-prot_id_df = tr_id_df.copy()
-prot_id_df['TranscriptID'] = prot_id_df['TranscriptID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df['ProteinID'] = prot_id_df['ProteinID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df.set_index('TranscriptID', inplace=True)
-
-tr_id_df.set_index('ProteinID', inplace=True)
-
 print ("Reading", args.gene_ids)
 gene_id_df = pd.read_csv(args.gene_ids, header=0)
 gene_id_df.set_index('TranscriptID', inplace=True)
@@ -229,7 +219,7 @@ def process_row(index):
 
         for j,prot_ids in enumerate(matching_seq_proteins):
             for k,prot_id in enumerate(prot_ids):         
-                if prot_id.startswith('ENSP'):
+                if prot_id.startswith('ENST'):
                     prot_id = prot_id.split('_', 1)[0]
                     #matching_transcripts.append(tr_id_df.loc[prot_id]['TranscriptID'])                  
 
@@ -251,11 +241,11 @@ def process_row(index):
 
         # Forget matches to variant sequences as this is a canonical peptide
         # Store the ENST ID for matching transcripts
-        matching_protein_positions = [ matching_protein_positions[idx] for idx,prot_id in enumerate(matching_proteins) if prot_id.startswith('ENSP') ]
-        matching_proteins = [ prot_id for prot_id in matching_proteins if prot_id.startswith('ENSP') ]
-        matching_transcripts = [ tr_id_df.loc[prot_id]['TranscriptID'] for prot_id in matching_proteins ]
+        matching_protein_positions = [ matching_protein_positions[idx] for idx,prot_id in enumerate(matching_proteins) if prot_id.startswith('ENST') ]
+        matching_proteins = [ prot_id for prot_id in matching_proteins if prot_id.startswith('ENST') ]
+        matching_transcripts = matching_proteins # [ tr_id_df.loc[prot_id]['TranscriptID'] for prot_id in matching_proteins ]
 
-        # get gene IDs only for canonical matches (by ENSP -> ENST -> ENSG)
+        # get gene IDs only for canonical matches (by ENST -> ENSG)
         matching_genes = [ gene_id_df.loc[trID.split('.', 1)[0]]['GeneID'] for trID in matching_transcripts ]
         matching_genes = list(dict.fromkeys(matching_genes))    # remove duplicates
         if (len(matching_proteins) == 1):
@@ -414,7 +404,7 @@ def process_row(index):
                         chromosome = protID.split('chr',1)[1].split('_',1)[0]
                         local_matching_alleles_DNA.append(chromosome + ':' + all_DNA_changes[j])
 
-            haplo_has_canonical_alternative = check_canonical_peptide(row['Sequence'], haplo_matching_changes, prot_id_df.loc[parent_transcript]['ProteinID'])
+            haplo_has_canonical_alternative = check_canonical_peptide(row['Sequence'], haplo_matching_changes, parent_transcript)
             has_canonical_alternative = has_canonical_alternative or haplo_has_canonical_alternative
 
             # Update the minimal number of co-occurring changes found

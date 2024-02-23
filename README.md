@@ -10,20 +10,20 @@ Required software is Snakemake and Conda \(install Conda / Mamba and Snakemake u
 git clone https://github.com/ProGenNo/ProHapDatabaseAnalysis.git ;
 cd ProHapDatabaseAnalysis ;
 ```
-- Download and unpack supplementary data from [https://zenodo.org/records/10149278](https://zenodo.org/records/10149278)
+- Download and unpack supplementary data from [https://zenodo.org/records/10688618](https://zenodo.org/records/10688618)
 ```
 cd data ;
-wget https://zenodo.org/records/10149278/files/231220_ProHap_ALL_proteindb.tar.gz ; gunzip 231220_ProHap_ALL_proteindb.tar.gz ; tar xf 231220_ProHap_ALL_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_ALL_proteindb.tar.gz ; gunzip 240216_ProHap_ALL_proteindb.tar.gz ; tar xf 240216_ProHap_ALL_proteindb.tar ;
 mkdir AFR ; cd AFR ;
-wget https://zenodo.org/records/10149278/files/231221_ProHap_AFR_proteindb.tar.gz ; gunzip 231221_ProHap_AFR_proteindb.tar.gz ; tar xf 231221_ProHap_AFR_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_AFR_proteindb.tar.gz ; gunzip 240216_ProHap_AFR_proteindb.tar.gz ; tar xf 240216_ProHap_AFR_proteindb.tar ;
 cd .. ; mkdir AMR ; cd AMR ;
-wget https://zenodo.org/records/10149278/files/231221_ProHap_AMR_proteindb.tar.gz ; gunzip 231221_ProHap_AMR_proteindb.tar.gz ; tar xf 231221_ProHap_AMR_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_AMR_proteindb.tar.gz ; gunzip 240216_ProHap_AMR_proteindb.tar.gz ; tar xf 240216_ProHap_AMR_proteindb.tar ;
 cd .. ; mkdir EUR ; cd EUR ;
-wget https://zenodo.org/records/10149278/files/231221_ProHap_EUR_proteindb.tar.gz ; gunzip 231221_ProHap_EUR_proteindb.tar.gz ; tar xf 231221_ProHap_EUR_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_EUR_proteindb.tar.gz ; gunzip 240216_ProHap_EUR_proteindb.tar.gz ; tar xf 240216_ProHap_EUR_proteindb.tar ;
 cd .. ; mkdir EAS ; cd EAS ;
-wget https://zenodo.org/records/10149278/files/231221_ProHap_EAS_proteindb.tar.gz ; gunzip 231221_ProHap_EAS_proteindb.tar.gz ; tar xf 231221_ProHap_EAS_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_EAS_proteindb.tar.gz ; gunzip 240216_ProHap_EAS_proteindb.tar.gz ; tar xf 240216_ProHap_EAS_proteindb.tar ;
 cd .. ; mkdir SAS ; cd SAS ;
-wget https://zenodo.org/records/10149278/files/231221_ProHap_SAS_proteindb.tar.gz ; gunzip 231221_ProHap_SAS_proteindb.tar.gz ; tar xf 231221_ProHap_SAS_proteindb.tar ;
+wget https://zenodo.org/records/10688618/files/240216_ProHap_SAS_proteindb.tar.gz ; gunzip 240216_ProHap_SAS_proteindb.tar.gz ; tar xf 240216_ProHap_SAS_proteindb.tar ;
 cd ../.. ;
 ```
 - By default, the pipeline uses at most 20 CPU cores per job. To change this, edit the `config.yaml` file.
