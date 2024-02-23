@@ -26,8 +26,9 @@ cd .. ; mkdir SAS ; cd SAS ;
 wget https://zenodo.org/records/10688618/files/240216_ProHap_SAS_proteindb.tar.gz ; gunzip 240216_ProHap_SAS_proteindb.tar.gz ; tar xf 240216_ProHap_SAS_proteindb.tar ;
 cd ../.. ;
 ```
-- By default, the pipeline uses at most 20 CPU cores per job. To change this, edit the `config.yaml` file.
-- Run the pipeline using `snakemake --cores 20 -p --use-conda`. Change the `--cores` parameter to set the maximum amount of CPU cores.
+- By default, the pipeline uses at most 12 CPU cores per job. To change this, edit the `config.yaml` file.
+- Run the pipeline using `snakemake --cores 12 -p --use-conda`. Change the `--cores` parameter to set the maximum amount of CPU cores.
+- Hardware requirements: Up to 80 GB RAM, 50 GB disk space, configurable number of CPU cores. Note that the RAM requirements decrease the fewer CPU cores are used, as data are copied internally by Python when running functions in parallel.
 
 ### Result files
 - `results/peptide_list_ALL.tsv`: list of all peptides included in the database (created using all samples in the 1000 Genomes panel)
