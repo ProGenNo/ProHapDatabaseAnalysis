@@ -86,7 +86,6 @@ rule collect_variant_stats:
 rule get_coverage:
     input:
         pep="results/peptide_list_ALL.tsv",
-        tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file=config['full_fasta_file'],
         ref_fasta=config['reference_fasta']
@@ -97,7 +96,7 @@ rule get_coverage:
     conda: "envs/main_env.yaml"
     threads: config['max_cores']
     shell:
-        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
+        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -o {output}"
 
 rule digest_proteins_pop:
     input:
@@ -157,7 +156,6 @@ rule add_peptide_frequency:
 rule get_coverage_freq_pop:
     input:
         pep="results/peptide_list_{popul}.csv",
-        tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv'
     output:
         "results/pep_freq_coverage_{popul}.tsv"
@@ -166,7 +164,7 @@ rule get_coverage_freq_pop:
     threads: config['max_cores']
     conda: "envs/main_env.yaml"
     shell:
-        "python src/get_peptide_coverage_freq.py -i {input.pep} -t {params.max_cores} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
+        "python src/get_peptide_coverage_freq.py -i {input.pep} -t {params.max_cores} -g_id {input.gene_ids} -o {output}"
 
 rule collect_coverage_freq_stats:
     input:
@@ -184,7 +182,6 @@ rule collect_coverage_freq_stats:
 rule get_coverage_pop:
     input:
         pep="results/peptide_list_{popul}.csv",
-        tr_ids='data/protein_transcript_ids_110.csv',
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file=config['population_fasta_file'],
         ref_fasta=config['reference_fasta']
@@ -195,7 +192,7 @@ rule get_coverage_pop:
     threads: config['max_cores']
     conda: "envs/main_env.yaml"
     shell:
-        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -tr_id {input.tr_ids} -o {output}"
+        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -o {output}"
 
 rule collect_coverage_stats:
     input:

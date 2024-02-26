@@ -71,9 +71,6 @@ parser.add_argument("-ref_fa", dest="ref_fasta", required=True,
 parser.add_argument("-g_id", dest="gene_ids", required=True,
                     help="csv file mapping transcript IDs to gene IDs")
 
-parser.add_argument("-tr_id", dest="transcript_ids", required=True,
-                    help="csv file mapping protein IDs to transcript IDs")
-
 parser.add_argument("-t", dest="threads", type=int, required=True,
                     help="# threads to use")
 
@@ -93,12 +90,6 @@ pep_df = pd.read_csv(args.input_file, header=0)
 
 print ("Reading", args.gene_ids)
 gene_id_df = pd.read_csv(args.gene_ids, header=0)
-
-print ("Reading", args.transcript_ids)
-prot_id_df = pd.read_csv(args.transcript_ids, header=0)
-prot_id_df['TranscriptID'] = prot_id_df['TranscriptID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df['ProteinID'] = prot_id_df['ProteinID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df.set_index('TranscriptID', inplace=True)
 
 total_peptide_count = len(pep_df)
 
@@ -177,10 +168,8 @@ def process_gene(geneIdx):
             region_type = region[2] + 1
             local_aa[region_type] += region_len
 
-        ENSP_ID = prot_id_df.loc[trID]['ProteinID']
-
         # add the remainder of the protein that's not covered, if any
-        prot_len = len(ref_proteins[ENSP_ID]['sequence'])
+        prot_len = len(ref_proteins[trID]['sequence'])
         if (len(coverage) > 0):
             local_aa[0] += (prot_len - coverage[-1][1])
             coverage.append([coverage[-1][1], prot_len, -1])

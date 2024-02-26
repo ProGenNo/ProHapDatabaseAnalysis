@@ -64,9 +64,6 @@ parser.add_argument("-i", dest="input_file", required=True,
 parser.add_argument("-g_id", dest="gene_ids", required=True,
                     help="csv file mapping transcript IDs to gene IDs")
 
-parser.add_argument("-tr_id", dest="transcript_ids", required=True,
-                    help="csv file mapping protein IDs to transcript IDs")
-
 parser.add_argument("-t", dest="threads", type=int, required=True,
                     help="# threads to use")
 
@@ -81,12 +78,6 @@ pep_df = pep_df[pep_df['pep_type1'].str.contains('variant')]
 
 print ("Reading", args.gene_ids)
 gene_id_df = pd.read_csv(args.gene_ids, header=0)
-
-print ("Reading", args.transcript_ids)
-prot_id_df = pd.read_csv(args.transcript_ids, header=0)
-prot_id_df['TranscriptID'] = prot_id_df['TranscriptID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df['ProteinID'] = prot_id_df['ProteinID'].apply(lambda x: x.split('.',1)[0])
-prot_id_df.set_index('TranscriptID', inplace=True)
 
 total_peptide_count = len(pep_df)
 
