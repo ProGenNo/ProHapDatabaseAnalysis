@@ -74,6 +74,9 @@ parser.add_argument("-g_id", dest="gene_ids", required=True,
 parser.add_argument("-t", dest="threads", type=int, required=True,
                     help="# threads to use")
 
+parser.add_argument("-sep", dest="input_sep", required=False,
+                    help="separator in input file (default: ',')", default=',')
+
 parser.add_argument("-o", dest="output_file", required=True,
                     help="output file")
 
@@ -86,7 +89,7 @@ print ("Reading", args.ref_fasta)
 ref_proteins = read_fasta(args.ref_fasta)
 
 print ('Reading', args.input_file)
-pep_df = pd.read_csv(args.input_file, header=0)
+pep_df = pd.read_csv(args.input_file, header=0, sep=args.input_sep)
 
 print ("Reading", args.gene_ids)
 gene_id_df = pd.read_csv(args.gene_ids, header=0)
