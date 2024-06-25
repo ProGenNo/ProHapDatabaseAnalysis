@@ -98,7 +98,7 @@ rule get_coverage:
     conda: "envs/main_env.yaml"
     threads: config['max_cores']
     shell:
-        "python src/get_peptide_stats_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -o {output}"
+        "python src/get_peptide_coverage_parallel.py -i {input.pep} -f {input.fasta_file} -t {params.max_cores} -ref_fa {input.ref_fasta} -g_id {input.gene_ids} -o {output}"
 
 rule digest_proteins_pop:
     input:
