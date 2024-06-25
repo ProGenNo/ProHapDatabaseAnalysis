@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from common import get_protein_name_dict, read_fasta
+from common import get_protein_name_dict, read_fasta, get_protein_coverage
 import argparse
 from multiprocessing import Pool
 import pandas as pd
@@ -16,45 +16,6 @@ def parse_snp_list(SNPs):
                 result.append(proteinID + ':' + SNP)
     
     return result
-
-def get_protein_coverage(data):
-    regions = []
-    current_pos = 0
-    region_start = 0
-    current_type = -1
-
-    active_regions = []
-    eventQ = [] if (data[0][0] == 0) else [{'pos': 0, 'event': 'start', 'type': -1, 'pep_idx': -1}, {'pos': data[0][0], 'event': 'end', 'type': -1, 'pep_idx': -1}]
-
-    for idx, pep in enumerate(data):
-        eventQ.append({ 'pos': pep[0], 'event': 'start', 'type': pep[2], 'pep_idx': idx })
-        eventQ.append({ 'pos': pep[0] + pep[1], 'event': 'end', 'type': pep[2], 'pep_idx': idx })
-
-    eventQ = sorted(eventQ, key=lambda x: x['pos'])
-
-    for evt in eventQ:
-        current_pos = evt['pos']
-
-        if evt['event'] == 'start':
-            if evt['type'] > current_type:
-                if current_pos > region_start:
-                    regions.append([region_start, current_pos, current_type])
-                current_type = evt['type']
-                region_start = current_pos
-            active_regions.append([evt['pep_idx'], evt['type']])
-
-        if evt['event'] == 'end':
-            active_regions = list(filter(lambda x: x[0] != evt['pep_idx'], active_regions))
-            new_type = -1
-            if (len(active_regions) > 0):
-                new_type = max(list(map(lambda x: x[1], active_regions)))
-            if (new_type < current_type):
-                if current_pos > region_start:
-                    regions.append([region_start, current_pos, current_type])
-                region_start = current_pos
-                current_type = new_type
-
-    return regions
 
 parser = argparse.ArgumentParser(
 	description='Reads a peptide database, gives statistics on protein coverage by canonical/non-canonical peptides.')
@@ -104,8 +65,6 @@ current_gene = ''
  # accessed by protein ID, 'peptides' list of lists, 3 values: start, length, type
 
 total_aa = [0, 0, 0, 0, 0]
-
-all_peptides = {}
 
 # split up the DF by gene ID
 all_genes = gene_id_df['GeneID'].drop_duplicates().tolist()

@@ -44,15 +44,21 @@ parser.add_argument("-ref_fa", dest="ref_fasta", required=True,
                     help="reference proteome (Ensembl) fasta file")                    
 
 parser.add_argument("-f", dest="fasta_file", required=True,
-                    help="fasta file")                    
+                    help="fasta file")                 
+
+parser.add_argument("-fh", dest="fasta_header", required=True,
+                    help="fasta header file (optional)")         
 
 parser.add_argument("-log", dest="log_file", required=True,
                     help="output log file")                    
 
 args = parser.parse_args()
 
+print ("Reading", args.fasta_header)
+fasta_header = pd.read_table(args.fasta_header)
+fasta_header.set_index('accession', inplace=True)
 print ("Reading", args.fasta_file)
-fasta_entries = read_fasta(args.fasta_file)
+fasta_entries = read_fasta(args.fasta_file, fasta_header)
 
 print ("Reading", args.ref_fasta)
 ref_proteins = read_fasta(args.ref_fasta)
