@@ -1,7 +1,7 @@
 configfile: "config.yaml"
 
 ENZYMES = ["Trypsin", "Lys-C", "Lys-N", "Glu-C", "Asp-N", "Chymotrypsin"]
-POPULATIONS = ["EUR", "EAS", 'SAS', 'AMR', 'AFR']
+POPULATIONS = ['EUR', 'EAS', 'SAS', 'AMR', 'AFR']
 
 rule all:
     input:
@@ -11,6 +11,7 @@ rule all:
         haplo_vars="results/all_included_variants.csv",
         proteome_coverage="results/peptide_coverage_stats.tsv",
         freq_coverage="results/peptide_coverage_freq_log.tsv",
+        indiv_coverage="results/peptide_indiv_coverage.tsv",
         freq_per_transcript="results/transcript_freqs_by_superpop.tsv"
 
 rule list_all_possible_variants:
@@ -223,4 +224,32 @@ rule get_frequencies_per_transcript:
     shell:
         "python src/extract_population_frequencies.py -i {params.input_filename} -transcripts {input.tr_id} -s {input.samples} -t {params.max_cores} -o_superpop {output}"
     
+rule get_individual_coverage:
+    input:    
+        pep="results/peptide_list_{popul}.csv",
+        haplo_db=config['popul_haplo_table'],
+        gene_ids='data/gene_transcript_ids_110.csv',
+        fasta_file=config['population_fasta_file'],
+        ref_fasta=config['reference_fasta'],
+        samples='igsr_samples_filtered.tsv'
+    output:
+        "results/pep_indiv_coverage_{popul}.tsv"
+    conda: "envs/main_env.yaml"
+    params:
+        max_cores=config['max_cores']
+    threads: config['max_cores']
+    shell:
+        "python src/get_peptide_coverage_indiv.py -i {input.pep} -t {params.max_cores} -g_id {input.gene_ids} -o {output} -s {input.samples} -hap_tsv {input.haplo_db} -pop {wildcards.popul}"
+
+rule collect_coverage_stats_indiv:
+    input:
+        pop_coverage=expand("results/pep_indiv_coverage_{popul}.tsv", popul=POPULATIONS),
+        ref_fasta=config['reference_fasta']
+    output:
+        "results/peptide_indiv_coverage.tsv"
+    conda: "envs/main_env.yaml"
+    params:
+        input_file_list = ','.join(expand("results/pep_indiv_coverage_{popul}.tsv", popul=POPULATIONS)),
+    shell:
+        "python src/get_peptide_stats_aggregated_indiv.py -i {params.input_file_list} -ref_fa {input.ref_fasta} -o {output} "
     
