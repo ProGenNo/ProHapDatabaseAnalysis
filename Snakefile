@@ -5,7 +5,7 @@ POPULATIONS = ["EUR", "EAS", 'SAS', 'AMR', 'AFR']
 
 rule all:
     input:
-        pept="results/peptide_list_ALL.tsv",
+        pept="results/peptide_list_ALL.csv",
         discoverable_vars="results/all_discoverable_variants.tsv",
         var_stats="results/variant_stats.txt",
         haplo_vars="results/all_included_variants.csv",
@@ -56,7 +56,7 @@ rule peptides_annotate_variation:
         fasta_header=config['full_fasta_header'],
         ref_fasta=config['reference_fasta']
     output:
-        "results/peptide_list_ALL.tsv"
+        "results/peptide_list_ALL.csv"
     params:
         haplotype_prefix=config['haplotype_protein_prefix'],
         max_cores=config['max_cores'],
@@ -68,7 +68,7 @@ rule peptides_annotate_variation:
 
 rule get_discoverable_variants:
 	input:
-		pep="results/peptide_list_ALL.tsv",
+		pep="results/peptide_list_ALL.csv",
 		hap=config['haplo_db_table']
 	output:
 		"results/all_discoverable_variants.tsv"
@@ -87,7 +87,7 @@ rule collect_variant_stats:
 
 rule get_coverage:
     input:
-        pep="results/peptide_list_ALL.tsv",
+        pep="results/peptide_list_ALL.csv",
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file=config['full_fasta_file'],
         ref_fasta=config['reference_fasta']
@@ -254,4 +254,155 @@ rule collect_coverage_stats_indiv:
         input_file_list = ','.join(expand("results/pep_indiv_coverage_{popul}.tsv", popul=POPULATIONS)),
     shell:
         "python src/get_peptide_stats_aggregated_indiv.py -i {params.input_file_list} -ref_fa {input.ref_fasta} -o {output} "
+    
+rule unzip_swissprot:
+    input:
+        'data/uniprot/uniprotkb_proteome_UP000005640_AND_revi_2024_06_25.fasta.gz'
+    output:
+        temp('data/uniprot/uniprotkb_proteome_UP000005640_AND_revi_2024_06_25.fasta')
+    shell:
+        'gunzip {input}'
+
+rule unzip_uniprot:
+    input:
+        'data/uniprot/uniprotkb_proteome_UP000005640_2024_06_25_incl_unreviewed.fasta.gz'
+    output:
+        temp('data/uniprot/uniprotkb_proteome_UP000005640_2024_06_25_incl_unreviewed.fasta')
+    shell:
+        'gunzip {input}'
+
+rule digest_proteins_swissprot:
+    input:
+        'data/uniprot/uniprotkb_proteome_UP000005640_AND_revi_2024_06_25.fasta'
+    output:
+        temp('data/uniprot/swissprot_trypsin.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/create_peptide_list.py -i {input} -enz Trypsin -o {output} -m 2"
+
+rule digest_proteins_uniprot:
+    input:
+        'data/uniprot/uniprotkb_proteome_UP000005640_2024_06_25_incl_unreviewed.fasta'
+    output:
+        temp('data/uniprot/uniprot_trypsin.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/create_peptide_list.py -i {input} -enz Trypsin -o {output} -m 2"
+
+rule digest_proteins_hrc:
+    input:
+        config['hrc_fasta_file']
+    output:
+        temp('data/HRC/hrc_peptides_trypsin.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/create_peptide_list.py -i {input} -enz Trypsin -o {output} -m 2"
+
+rule annotate_peptides_hrc:
+    input:
+        peptides="data/HRC/hrc_peptides_trypsin.tsv",
+        haplo_db=config["hrc_haplo_table"],
+        tr_ids='data/protein_transcript_ids_110.csv',
+        gene_ids='data/gene_transcript_ids_110.csv',
+        fasta_file=config['hrc_fasta_file'],
+        fasta_header=config['hrc_fasta_header'],
+        ref_fasta=config['reference_fasta']
+    output:
+        temp('data/HRC/hrc_peptides_trypsin_annot.tsv')
+    params:
+        haplotype_prefix=config['haplotype_protein_prefix'],
+        max_cores=config['max_cores'],
+        log_file="results/hrc_annot_errors.log"
+    threads: config['max_cores']
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/peptides_annotate_variation.py -i {input.peptides} -hap_tsv {input.haplo_db} -hap_prefix {params.haplotype_prefix} -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -fh {input.fasta_header} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; "
+
+rule digest_proteins_pangenome:
+    input:
+        config['pangen_fasta_file']
+    output:
+        temp('data/pangenome_peptides_trypsin.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/create_peptide_list.py -i {input} -enz Trypsin -o {output} -m 2"
+    
+rule annotate_peptides_pangenome:
+    input:
+        peptides='data/pangenome_peptides_trypsin.tsv',
+        haplo_db=config["pangen_haplo_table"],
+        tr_ids='data/protein_transcript_ids_110.csv',
+        gene_ids='data/gene_transcript_ids_110.csv',
+        fasta_file=config['pangen_fasta_file'],
+        fasta_header=config['pangen_fasta_header'],
+        ref_fasta=config['reference_fasta']
+    output:
+        temp('data/pangenome_peptides_trypsin_annot.tsv')
+    params:
+        haplotype_prefix=config['haplotype_protein_prefix'],
+        max_cores=config['max_cores'],
+        log_file="results/hrc_annot_errors.log"
+    threads: config['max_cores']
+    conda: "envs/main_env.yaml"
+    shell:
+        "python3 src/peptides_annotate_variation.py -i {input.peptides} -hap_tsv {input.haplo_db} -hap_prefix {params.haplotype_prefix} -log {params.log_file} -tr_id {input.tr_ids} -g_id {input.gene_ids} -f {input.fasta_file} -fh {input.fasta_header} -ref_fa {input.ref_fasta} -t {params.max_cores} -o {output}; "
+
+rule compare_uniprot_hrc:
+    input:
+        sp='data/uniprot/swissprot_trypsin.tsv',
+        up='data/uniprot/uniprot_trypsin.tsv',
+        pep='data/HRC/hrc_peptides_trypsin_annot.tsv',
+    output:
+        temp('results/uniprot_comparison_peptides_hrc.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/compare_with_uniprot.py -i {input.pep} -sp {input.sp} -iso {input.up} -o {output}"
+
+rule compare_uniprot_pangenome:
+    input:
+        sp='data/uniprot/swissprot_trypsin.tsv',
+        up='data/uniprot/uniprot_trypsin.tsv',
+        pep='data/pangenome_peptides_trypsin_annot.tsv',
+    output:
+        temp('results/uniprot_comparison_peptides_pangenome.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/compare_with_uniprot.py -i {input.pep} -sp {input.sp} -iso {input.up} -o {output}"
+
+rule compare_uniprot_pop:
+    input:
+        sp='data/uniprot/swissprot_trypsin.tsv',
+        up='data/uniprot/uniprot_trypsin.tsv',
+        pop_pep='results/peptide_list_{popul}.csv',
+    output:
+        temp('results/uniprot_comparison_peptides_{popul}.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/compare_with_uniprot.py -i {input.pop_pep} -sp {input.sp} -iso {input.up} -o {output}"
+    
+rule compare_uniprot_1kgp:
+    input:
+        sp='data/uniprot/swissprot_trypsin.tsv',
+        up='data/uniprot/uniprot_trypsin.tsv',
+        pep='results/peptide_list_ALL.csv',
+    output:
+        temp('results/uniprot_comparison_peptides_1kgp.tsv')
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/compare_with_uniprot.py -i {input.pep} -sp {input.sp} -iso {input.up} -o {output}"
+
+rule collect_uniprot_comparison:
+    input:
+        pop_pep=expand("results/uniprot_comparison_peptides_{popul}.tsv", popul=POPULATIONS),
+        all_pep='results/uniprot_comparison_peptides_1kgp.tsv',
+        hrc_pep='results/uniprot_comparison_peptides_hrc.tsv',
+        pangen_pep="results/uniprot_comparison_peptides_pangenome.tsv"
+    output:
+        "results/uniprot_comparison_stats.tsv"    
+    conda: "envs/main_env.yaml"
+    params:
+        input_file_list = ','.join(["results/uniprot_comparison_peptides_1kgp.tsv", "results/uniprot_comparison_peptides_pangenome.tsv", 'results/uniprot_comparison_peptides_hrc.tsv'] + expand("results/uniprot_comparison_peptides_{popul}.tsv", popul=POPULATIONS)),
+        populations = ','.join(['ALL', 'Pangenome_ALL', 'HRC'] + POPULATIONS)
+    shell:
+        "python src/get_uniprot_comparison_aggregated.py -i {params.input_file_list} -pop {params.populations} -o {output}"
     
