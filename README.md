@@ -47,6 +47,6 @@ cd ../.. ;
 ### Reproducing figures
 Due to the computational demands, we expect the Snakemake pipeline to be run on a high-performance server. We provide three Jupyter notebooks to reproduce the figures using the result files as above.
 
-To reproduce the plots in Figure 2, run the cells of the notebook in `notebooks/Populations_comparison_plots.ipynb`.
-To reproduce the plots in Extended Data Figure 1 and 3, run the cells of the notebook in `notebooks/variant_types_and_overlap_plots.ipynb`.
-To reproduce the plots in Extended Data Figure 4 and 5, run the cells of the notebook in `notebooks/spectra_mirror_plots.ipynb`.
+- To reproduce the plots in Figure 2, run the cells of the notebook in `notebooks/Populations_comparison_plots.ipynb`.
+- To reproduce the plots in Extended Data Figure 1 and 3, run the cells of the notebook in `notebooks/variant_types_and_overlap_plots.ipynb`.
+- To reproduce the plots in Extended Data Figure 4 and 5, run the cells of the notebook in `notebooks/spectra_mirror_plots.ipynb`.
