@@ -12,7 +12,8 @@ rule all:
         proteome_coverage="results/peptide_coverage_stats.tsv",
         freq_coverage="results/peptide_coverage_freq_log.tsv",
         indiv_coverage="results/peptide_indiv_coverage.tsv",
-        freq_per_transcript="results/transcript_freqs_by_superpop.tsv"
+        freq_per_transcript="results/transcript_freqs_by_superpop.tsv",
+        uniprot_comparison="results/uniprot_comparison_stats.tsv"
 
 rule list_all_possible_variants:
     input:
