@@ -24,9 +24,8 @@ cd .. ; mkdir EAS ; cd EAS ;
 wget https://zenodo.org/records/12671237/files/240530_ProHap_EAS.tar.gz ; tar xf 240530_ProHap_EAS.tar.gz ;
 cd .. ; mkdir SAS ; cd SAS ;
 wget https://zenodo.org/records/12671237/files/240530_ProHap_SAS.tar.gz ; tar xf 240530_ProHap_SAS.tar.gz ;
-cd .. ; mkdir HRC ; cd HRC ;
+cd .. ; 
 wget https://zenodo.org/records/12671302/files/240703_HRC1.1_GRCh38.tar.gz ; tar xf 240703_HRC1.1_GRCh38.tar.gz ;
-cd .. ; mkdir pangenome ; cd pangenome ;
 wget https://zenodo.org/records/12686819/files/240703_ProHap_pangenome_ALL.tar.gz ; tar xf 240703_ProHap_pangenome_ALL.tar.gz ;
 cd ../.. ;
 ```
