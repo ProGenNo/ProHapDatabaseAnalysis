@@ -35,9 +35,9 @@ cd ../.. ;
 
 ### Result files
 - `results/peptide_list_ALL.tsv`: list of all peptides included in the database (created using all samples in the 1000 Genomes panel)
-- `results/all_discoverable_variants.tsv`: list of all variants discoverable in peptides
+- `results/all_discoverable_variants.tsv`: list of all variants for which the consequence is discoverable in a peptide
 - `results/all_included_variants.csv`: list of all genetic variants included in the database
-- `results/variant_stats.txt`: discoverability of variants in peptides
+- `results/variant_stats.txt`: discoverability of variant consequences in peptides
 - `results/peptide_coverage_stats.tsv`: coverage of the proteome by canonical / variant peptides (used for Figure 2A)
 - `results/peptide_coverage_freq_log.tsv`: coverage of the proteome by canonical / variant peptides based on haplotype frequency threshold (log. scale, used for Figure 2B)
 - `results/transcript_freqs_by_superpop.tsv`: list of haplotype frequencies per superpopulation for each transcript (used for Figure 2C-G)
