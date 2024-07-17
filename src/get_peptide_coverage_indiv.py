@@ -29,8 +29,8 @@ parser.add_argument("-g_id", dest="gene_ids", required=True,
 parser.add_argument("-hap_prefix", dest="haplo_prefix", required=False,
                     help="prefix for haplotype protein ID (default: 'haplo_')", default='haplo_')
 
-parser.add_argument("-hap_tsv", dest="haplo_db", required=False,
-                    help="haplotypes tab-separated file (optional)", default=None)
+parser.add_argument("-hap_tsv", dest="haplo_db", required=True,
+                    help="haplotypes tab-separated file")
 
 parser.add_argument("-pop", dest="population_code", required=True,
                     help="population code")
