@@ -230,7 +230,7 @@ rule get_frequencies_per_transcript:
 rule get_individual_coverage:
     input:    
         pep="results/peptide_list_{popul}.csv",
-        haplo_db=config['popul_haplo_table'],
+        haplo_db=config['haplo_samples_table'],
         gene_ids='data/gene_transcript_ids_110.csv',
         fasta_file=config['population_fasta_file'],
         ref_fasta=config['reference_fasta'],
