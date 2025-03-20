@@ -407,3 +407,13 @@ rule collect_uniprot_comparison:
     shell:
         "python src/get_uniprot_comparison_aggregated.py -i {params.input_file_list} -pop {params.populations} -o {output}"
     
+rule check_IL_ambiguities:
+    input:
+        sp='data/uniprot/swissprot_trypsin.tsv',
+        up='data/uniprot/uniprot_trypsin.tsv',
+        pep='results/peptide_list_ALL.csv',
+    output:
+        "results/IL_ambiguities_ProHap_SP_UP_Trypsin.csv"
+    conda: "envs/main_env.yaml"
+    shell:
+        "python src/check_IL_ambiguities.py -i {input.pep} -sp {input.sp} -iso {input.pt} -o {output}"
