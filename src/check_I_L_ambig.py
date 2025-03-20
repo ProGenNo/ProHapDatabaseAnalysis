@@ -23,7 +23,7 @@ def concat_string_series(series):
 
 # ProHap peptides
 print ('Reading', args.input_file)
-pep_df = pd.read_csv(args.input_file, sep='\t')
+pep_df = pd.read_csv(args.input_file)
 pep_df = pep_df[pep_df['Enzyme'] == 'Trypsin']
 
 # Select only peptides containing I or L
