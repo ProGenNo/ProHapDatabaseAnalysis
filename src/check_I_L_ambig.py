@@ -23,7 +23,7 @@ def get_conflicting_peptides(seq_corrected, seq_orig, df):
 
 print ('Reading', args.input_file)
 pep_df = pd.read_csv(args.input_file, sep='\t')
-prohap_il_peptides = pep_df[pep_df['Sequence'].str.contains('I') | pep_df['Sequence'].str.contains('L')]
+prohap_il_peptides = pep_df[pep_df['Sequence'].str.contains('I') | pep_df['Sequence'].str.contains('L')].copy()
 prohap_il_peptides['ID'] = prohap_il_peptides['ID'].apply(lambda x: 'prohap_'+x)
 prohap_il_peptides['Database'] = 'ProHap_1kGP_ALL'
 prohap_il_peptides['Sequence_I_to_L'] = prohap_il_peptides['Sequence'].apply(lambda seq: seq.replace('I', 'L'))
@@ -31,7 +31,7 @@ prohap_il_peptides['Ambiguous'] = prohap_il_peptides.apply(lambda row: get_confl
 
 print ('Reading', args.input_file_sp)
 sp_pep_df = pd.read_table(args.input_file_sp)
-sp_il_peptides = sp_pep_df[sp_pep_df['Sequence'].str.contains('I') | sp_pep_df['Sequence'].str.contains('L')]
+sp_il_peptides = sp_pep_df[sp_pep_df['Sequence'].str.contains('I') | sp_pep_df['Sequence'].str.contains('L')].copy()
 sp_il_peptides['ID'] = sp_il_peptides['ID'].apply(lambda x: 'swissprot_'+x)
 sp_il_peptides['Database'] = 'SwissProt'
 sp_il_peptides['Sequence_I_to_L'] = sp_il_peptides['Sequence'].apply(lambda seq: seq.replace('I', 'L'))
@@ -39,7 +39,7 @@ sp_il_peptides['Ambiguous'] = sp_il_peptides.apply(lambda row: get_conflicting_p
 
 print ('Reading', args.input_file_iso)
 iso_pep_df = pd.read_table(args.input_file_iso)
-iso_il_peptides = iso_pep_df[iso_pep_df['Sequence'].str.contains('I') | iso_pep_df['Sequence'].str.contains('L')]
+iso_il_peptides = iso_pep_df[iso_pep_df['Sequence'].str.contains('I') | iso_pep_df['Sequence'].str.contains('L')].copy()
 iso_il_peptides['ID'] = iso_il_peptides['ID'].apply(lambda x: 'uniprot_'+x)
 iso_il_peptides['Database'] = 'UniProt_isoform'
 iso_il_peptides['Sequence_I_to_L'] = iso_il_peptides['Sequence'].apply(lambda seq: seq.replace('I', 'L'))
