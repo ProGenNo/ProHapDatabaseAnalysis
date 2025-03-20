@@ -22,7 +22,7 @@ def get_conflicting_peptides(seq_corrected, seq_orig, df):
     return ';'.join(df[(df['Sequence_I_to_L'] == seq_corrected) & (df['Sequence'] != seq_orig)]['Sequence'].tolist())
 
 print ('Reading', args.input_file)
-pep_df = pd.read_csv(args.input_file)
+pep_df = pd.read_csv(args.input_file, sep='\t')
 prohap_il_peptides = pep_df[pep_df['Sequence'].str.contains('I') | pep_df['Sequence'].str.contains('L')]
 prohap_il_peptides['ID'] = prohap_il_peptides['ID'].apply(lambda x: 'prohap_'+x)
 prohap_il_peptides['Database'] = 'ProHap_1kGP_ALL'
