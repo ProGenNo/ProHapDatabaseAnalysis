@@ -54,5 +54,5 @@ iso_pep_ambiguous = iso_pep_ambiguous[iso_pep_ambiguous['Sequence'].str.contains
 '''
 
 df_joined = prohap_pep_ambiguous.join(sp_pep_ambiguous.set_index('Sequence_I_to_L'), on='Sequence_I_to_L', lsuffix='_ProHap', rsuffix='_SwissProt', how='outer')
-df_joined.fillna('-')
+df_joined.fillna('-', inplace=True)
 df_joined.to_csv(args.output_file, sep='\t', header=True, index=False)
