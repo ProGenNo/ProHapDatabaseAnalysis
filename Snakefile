@@ -411,7 +411,7 @@ rule check_IL_ambiguities:
     input:
         sp='data/uniprot/swissprot_trypsin.tsv',
         #up='data/uniprot/uniprot_trypsin.tsv',
-        pep='results/peptide_list_Trypsin.tsv',
+        pep='results/peptide_list_ALL.csv',
     output:
         "results/IL_ambiguities_ProHap_SP_UP_Trypsin.csv"
     conda: "envs/main_env.yaml"
