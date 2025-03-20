@@ -19,7 +19,7 @@ parser.add_argument("-o", dest="output_file", required=True,
 args = parser.parse_args()
 
 def concat_string_series(series):
-    return ';'.join(series.tolist())
+    return ';'.join(series.drop_duplicates().tolist())
 
 # ProHap peptides
 print ('Reading', args.input_file)
