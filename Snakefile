@@ -416,4 +416,4 @@ rule check_IL_ambiguities:
         "results/IL_ambiguities_ProHap_SP_UP_Trypsin.csv"
     conda: "envs/main_env.yaml"
     shell:
-        "python src\check_I_L_ambig.py -i {input.pep} -sp {input.sp} -iso {input.up} -o {output}"
+        "python src/check_I_L_ambig.py -i {input.pep} -sp {input.sp} -iso {input.up} -o {output}"
